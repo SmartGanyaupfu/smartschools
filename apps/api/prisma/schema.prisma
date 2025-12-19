@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+//generator client {
+ // provider = "prisma-client"
+//  output   = "../generated/prisma"
+//}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+/* =======================
+   AUTH & RBAC
+======================= */
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String
+  schoolId    String?
+  users       User[]
+  permissions RolePermission[]
+
+  @@unique([name, schoolId])
+}
+
+model Permission {
+  id    String @id @default(uuid())
+  code  String @unique
+  label String
+
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String
+  passwordHash String
+  isActive     Boolean  @default(true)
+
+  roleId       String
+  role         Role     @relation(fields: [roleId], references: [id])
+
+  schoolId     String
+  school       School   @relation(fields: [schoolId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  @@unique([email, schoolId])
+  @@index([schoolId])
+}
+
+
+/* =======================
+   MULTI-TENANT CORE
+======================= */
+
+model School {
+  id        String   @id @default(uuid())
+  name      String
+  code      String
+  email     String?
+  phone     String?
+  address   String?
+  logoUrl   String?
+
+  users         User[]
+  academicYears AcademicYear[]
+  grades        Grade[]
+  subjects      Subject[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@unique([code])
+}
+
+model AcademicYear {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(false)
+
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+
+  terms     Term[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([name, schoolId])
+  @@index([schoolId])
+}
+
+
+model Term {
+  id             String   @id @default(uuid())
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  @@index([academicYearId])
+}
+
+model Grade {
+  id        String   @id @default(uuid())
+  name      String
+  level     Int?
+
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+
+  subjects  Subject[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([name, schoolId])
+}
+
+
+model Subject {
+  id        String   @id @default(uuid())
+  name      String
+  code      String?
+
+  schoolId  String
+  school    School   @relation(fields: [schoolId], references: [id])
+
+  gradeId   String?
+  grade     Grade?   @relation(fields: [gradeId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([name, schoolId])
+}
+
