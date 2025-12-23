@@ -9,6 +9,27 @@
 //  output   = "../generated/prisma"
 //}
 
+enum AttendanceType {
+  DAY_ONLY
+  BOARDING_ONLY
+  MIXED
+}
+
+enum SessionType {
+  SINGLE
+  MULTI
+}
+
+enum SessionPeriod {
+  MORNING
+  AFTERNOON
+}
+
+enum SessionRotation {
+  FIXED
+  ALTERNATING_PER_TERM
+}
+
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -77,6 +98,23 @@ model User {
    MULTI-TENANT CORE
 ======================= */
 
+model SchoolConfiguration {
+  id String @id @default(uuid())
+
+  schoolId String @unique
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  attendanceType AttendanceType
+  sessionType    SessionType
+
+  // Only relevant when sessionType = MULTI
+  sessionRotation SessionRotation?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
 model School {
   id        String   @id @default(uuid())
   name      String
@@ -90,7 +128,9 @@ model School {
   academicYears AcademicYear[]
   grades        Grade[]
   subjects      Subject[]
-
+  students Student[]
+  admissionNumberSequences  AdmissionNumberSequence[]
+  configuration SchoolConfiguration?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
@@ -136,6 +176,7 @@ model Grade {
   school    School   @relation(fields: [schoolId], references: [id])
 
   subjects  Subject[]
+  students  Student[]
 
   createdAt DateTime @default(now())
 
@@ -159,3 +200,143 @@ model Subject {
   @@unique([name, schoolId])
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model Student {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  gender       Gender?
+  dateOfBirth  DateTime?
+
+  admissionNo  String
+  isActive     Boolean  @default(true)
+
+  schoolId     String
+  school       School   @relation(fields: [schoolId], references: [id])
+
+  gradeId      String
+  grade        Grade    @relation(fields: [gradeId], references: [id])
+  
+   addresses    StudentAddress[]      // 
+  medicalProfile StudentMedicalProfile?
+  guardians    StudentGuardian[]
+  sponsor      StudentSponsor?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  @@unique([admissionNo, schoolId])
+  @@index([schoolId])
+  @@index([gradeId])
+}
+
+model AdmissionNumberSequence {
+  id             String   @id @default(uuid())
+  schoolId       String
+  prefix         String   // e.g. "AD2025", "ADM-", "S-"
+  currentCounter Int      @default(0)
+  padding        Int      @default(5)
+  isActive       Boolean  @default(true)
+
+  school         School   @relation(fields: [schoolId], references: [id])
+   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@unique([schoolId, prefix])
+}
+
+
+model Address {
+  id        String   @id @default(uuid())
+  line1     String
+  line2     String?
+  city      String
+  province  String?
+  country   String
+  postalCode String?
+  studentAddresses StudentAddress[]
+  createdAt DateTime @default(now())
+}
+
+model StudentAddress {
+  id        String   @id @default(uuid())
+  studentId String
+  addressId String
+  type      AddressType
+
+  student Student @relation(fields: [studentId], references: [id])
+  address Address @relation(fields: [addressId], references: [id])
+
+  @@unique([studentId, type])
+}
+
+enum AddressType {
+  HOME
+  POSTAL
+  HOME_POSTAL
+}
+
+model StudentMedicalProfile {
+  id          String   @id @default(uuid())
+  studentId   String   @unique
+
+  medicalAidName   String?
+  medicalAidNumber String?
+  bloodType        String?
+  allergies        String?
+  chronicConditions String?
+
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+model Guardian {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  phone     String
+  email     String?
+students  StudentGuardian[]
+  createdAt DateTime @default(now())
+}
+
+model StudentGuardian {
+  id          String   @id @default(uuid())
+  studentId   String
+  guardianId  String
+  relationship String
+  isPrimary   Boolean @default(false)
+
+  student  Student  @relation(fields: [studentId], references: [id])
+  guardian Guardian @relation(fields: [guardianId], references: [id])
+
+  @@unique([studentId, guardianId])
+}
+
+model Sponsor {
+  id        String   @id @default(uuid())
+  name      String
+  type      SponsorType
+  contact   String?
+students  StudentSponsor[]
+  createdAt DateTime @default(now())
+}
+
+enum SponsorType {
+  PARENT
+  SCHOLARSHIP
+  ORGANISATION
+}
+
+model StudentSponsor {
+  id        String   @id @default(uuid())
+  studentId String   @unique
+  sponsorId String
+
+  student Student @relation(fields: [studentId], references: [id])
+  sponsor Sponsor @relation(fields: [sponsorId], references: [id])
+}
