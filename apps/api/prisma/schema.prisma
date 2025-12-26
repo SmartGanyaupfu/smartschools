@@ -78,7 +78,7 @@ model User {
   email        String
   passwordHash String
   isActive     Boolean  @default(true)
-
+  studentDocuments StudentDocument[]  
   roleId       String
   role         Role     @relation(fields: [roleId], references: [id])
 
@@ -147,7 +147,7 @@ model AcademicYear {
   school    School   @relation(fields: [schoolId], references: [id])
 
   terms     Term[]
-
+  enrollments StudentEnrollment[]
   createdAt DateTime @default(now())
 
   @@unique([name, schoolId])
@@ -160,7 +160,7 @@ model Term {
   name           String
   startDate      DateTime
   endDate        DateTime
-
+ enrollments StudentEnrollment[]
   academicYearId String
   academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
 
@@ -177,7 +177,7 @@ model Grade {
 
   subjects  Subject[]
   students  Student[]
-
+  enrollments StudentEnrollment[]
   createdAt DateTime @default(now())
 
   @@unique([name, schoolId])
@@ -226,6 +226,8 @@ model Student {
   medicalProfile StudentMedicalProfile?
   guardians    StudentGuardian[]
   sponsor      StudentSponsor?
+  enrollments StudentEnrollment[]
+  studentDocuments StudentDocument[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -340,3 +342,70 @@ model StudentSponsor {
   student Student @relation(fields: [studentId], references: [id])
   sponsor Sponsor @relation(fields: [sponsorId], references: [id])
 }
+model StudentDocument {
+  id           String   @id @default(uuid())
+  studentId    String
+
+  type         StudentDocumentType
+  title        String
+  fileUrl      String
+  mimeType     String
+  fileSize     Int
+
+  isVerified   Boolean  @default(false)
+  uploadedById String?
+
+  student      Student  @relation(fields: [studentId], references: [id])
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+
+  createdAt    DateTime @default(now())
+  deletedAt    DateTime?
+
+  @@index([studentId])
+  @@index([type])
+}
+enum StudentDocumentType {
+  BIRTH_CERTIFICATE
+  ID_DOCUMENT
+  REPORT_CARD
+  MEDICAL_REPORT
+  CONSENT_FORM
+  TRANSFER_LETTER
+  OTHER
+}
+model StudentEnrollment {
+  id             String   @id @default(uuid())
+
+  studentId      String
+  schoolId       String
+
+  gradeId        String
+  academicYearId String
+  termId         String?
+
+  startDate      DateTime
+  endDate        DateTime?
+
+  status         EnrollmentStatus @default(ACTIVE)
+  reason         String?
+
+  student        Student        @relation(fields: [studentId], references: [id])
+  grade          Grade          @relation(fields: [gradeId], references: [id])
+  academicYear   AcademicYear   @relation(fields: [academicYearId], references: [id])
+  term           Term?          @relation(fields: [termId], references: [id])
+
+  createdAt      DateTime @default(now())
+
+  @@index([studentId])
+  @@index([schoolId])
+  @@index([academicYearId])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  TRANSFERRED
+  DROPPED
+}
+
+

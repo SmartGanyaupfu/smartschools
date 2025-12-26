@@ -15,6 +15,8 @@ import { GuardianModule } from './guardian/guardian.module';
 import { StudentAddressModule } from './student-address/student-address.module';
 import { StudentMedicalProfileModule } from './student-medical-profile/student-medical-profile.module';
 import { StudentSponsorModule } from './student-sponsor/student-sponsor.module';
+import { StudentDocumentModule } from './student-document/student-document.module';
+import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { StudentSponsorModule } from './student-sponsor/student-sponsor.module';
     StudentAddressModule,
     StudentMedicalProfileModule,
     StudentSponsorModule,
+    StudentDocumentModule,
+    StudentEnrollmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
