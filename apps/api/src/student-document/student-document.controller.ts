@@ -25,7 +25,6 @@ export class StudentDocumentController {
     @Req() req: any,
     @Body() dto: CreateStudentDocumentDto,
   ) {
-    console.log('Authenticated user:', req.user);
     return this.service.create(studentId, req.user.userId, dto);
   }
 

@@ -17,6 +17,7 @@ import { StudentMedicalProfileModule } from './student-medical-profile/student-m
 import { StudentSponsorModule } from './student-sponsor/student-sponsor.module';
 import { StudentDocumentModule } from './student-document/student-document.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
+import { AttendanceModule } from './attendance/attendance.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { StudentEnrollmentModule } from './student-enrollment/student-enrollment
     StudentSponsorModule,
     StudentDocumentModule,
     StudentEnrollmentModule,
+    AttendanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

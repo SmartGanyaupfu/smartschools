@@ -225,6 +225,7 @@ model Student {
    addresses    StudentAddress[]      // 
   medicalProfile StudentMedicalProfile?
   guardians    StudentGuardian[]
+  attendanceRecords Attendance[]
   sponsor      StudentSponsor?
   enrollments StudentEnrollment[]
   studentDocuments StudentDocument[]
@@ -407,5 +408,29 @@ enum EnrollmentStatus {
   TRANSFERRED
   DROPPED
 }
+
+model Attendance {
+  id            String   @id @default(uuid())
+  studentId     String
+  date          DateTime
+  status        AttendanceStatus
+  remarks       String?
+  recordedById  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  student       Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, date]) // Prevent duplicate daily records
+  @@index([date])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
 
 
